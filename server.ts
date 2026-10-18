@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: "25mb" }));
 
@@ -15,7 +15,7 @@ app.use(express.json({ limit: "25mb" }));
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("A chave GEMINI_API_KEY não foi configurada no ambiente.");
+    throw new Error("A chave GEMINI_API_KEY não foi configurada nas variáveis de ambiente.");
   }
   return new GoogleGenAI({
     apiKey,
@@ -50,7 +50,7 @@ Tom de Voz: Profissional, técnico, confiável, altamente proativo, pedagógico 
 // API 1: Chat Nema IA
 app.post("/api/chat", async (req, res) => {
   try {
-    const { messages, imageBase64, mimeType, selectedCrop } = req.body;
+    const { messages, imageBase64, mimeType, selectedCrop, isBackup } = req.body;
     const ai = getGeminiClient();
 
     let dynamicSystemPrompt = NEMA_SYSTEM_PROMPT;
@@ -90,8 +90,10 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
+    const selectedModel = isBackup ? "gemini-3.1-flash-lite" : "gemini-3.8-flash";
+
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: selectedModel,
       contents: formattedContents,
       config: {
         systemInstruction: dynamicSystemPrompt,
@@ -155,7 +157,7 @@ Analise a seguinte amostra de solo e forneça um parecer técnico agronômico es
     parts.push({ text: promptText });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.8-flash",
       contents: { parts },
       config: {
         systemInstruction: NEMA_SYSTEM_PROMPT,
@@ -205,7 +207,7 @@ Apresente o resultado em Markdown com a seguinte estrutura:
     parts.push({ text: promptText });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.8-flash",
       contents: { parts },
       config: {
         systemInstruction: NEMA_SYSTEM_PROMPT,
@@ -246,7 +248,7 @@ Forneça a resposta estritamente em formato JSON com os seguintes campos:
 }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.8-flash",
       contents: promptText,
       config: {
         systemInstruction: NEMA_SYSTEM_PROMPT,

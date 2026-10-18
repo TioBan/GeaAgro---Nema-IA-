@@ -123,8 +123,16 @@ Como posso ajudar no seu manejo hoje?
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   // Camera PWA Integration States
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -235,7 +243,7 @@ Como posso ajudar no seu manejo hoje?
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        alert('Selecione uma imagem menor que 10MB.');
+        setToastMessage('Selecione uma imagem menor que 10MB.');
         return;
       }
       const reader = new FileReader();
@@ -277,7 +285,8 @@ Como posso ajudar no seu manejo hoje?
         });
 
         if (!res.ok) {
-          throw new Error('Falha de resposta do servidor da Nema IA.');
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Falha de resposta do servidor da Nema IA.');
         }
 
         const data = await res.json();
@@ -295,7 +304,7 @@ Como posso ajudar no seu manejo hoje?
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: `⚠️ **Aviso do Sistema Nema IA**: Falha de resposta do servidor da Nema IA.`,
+          content: `⚠️ **Aviso do Sistema Nema IA**: ${err.message || 'Falha de resposta do servidor da Nema IA.'}`,
           timestamp: new Date(),
         },
       ]);
@@ -355,7 +364,8 @@ Como posso ajudar no seu manejo hoje?
       });
 
       if (!res.ok) {
-        throw new Error('Falha de resposta do servidor da Nema IA.');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Falha de resposta do servidor da Nema IA.');
       }
 
       const data = await res.json();
@@ -374,7 +384,7 @@ Como posso ajudar no seu manejo hoje?
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: `⚠️ **Aviso do Sistema Nema IA**: Falha de resposta do servidor da Nema IA.`,
+          content: `⚠️ **Aviso do Sistema Nema IA**: ${err.message || 'Falha de resposta do servidor da Nema IA.'}`,
           timestamp: new Date(),
         },
       ]);
@@ -386,7 +396,7 @@ Como posso ajudar no seu manejo hoje?
   // Speech Recognition Speech-to-Text helper
   const toggleSpeechRecognition = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Seu navegador não possui suporte a ditado por áudio. Você pode digitar normalmente.');
+      setToastMessage('Seu navegador não possui suporte a ditado por áudio. Você pode digitar normalmente.');
       return;
     }
 
@@ -508,12 +518,25 @@ Como posso ajudar no seu manejo hoje?
             onChange={(e) => setAiEngine(e.target.value as any)}
             className="bg-emerald-900 hover:bg-emerald-800 text-amber-300 text-[11px] font-bold py-1 px-2 pr-4 rounded-lg border border-emerald-700 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer transition"
           >
-            <option value="gemini">✨ Gemini 3.6 (Nema Principal)</option>
+            <option value="gemini">✨ Gemini 3.8 Flash (Nema Principal)</option>
             <option value="backup">🌐 Servidor Secundário (Nema Backup)</option>
             <option value="local_embrapa">🎓 Base Científica Local (Embrapa/IAC)</option>
           </select>
         </div>
       </div>
+
+      {/* Floating Notification Toast */}
+      {toastMessage && (
+        <div className="bg-amber-500 text-stone-900 text-xs px-4 py-2 font-medium flex items-center justify-between border-b border-amber-600 animate-fadeIn">
+          <span>{toastMessage}</span>
+          <button 
+            onClick={() => setToastMessage(null)}
+            className="text-stone-900 hover:text-black font-bold ml-2 text-sm"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Messages Area */}
       <div className={`flex-1 overflow-y-auto p-4 space-y-4 transition-colors duration-300 ${
