@@ -1,0 +1,6 @@
+{
+  "name": "Nema IA GeaAgro",
+  "description": "Assistente virtual técnica em agronomia digital para fertilidade do solo, manejo de culturas, receituário agronômico e Business Model Canvas.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
